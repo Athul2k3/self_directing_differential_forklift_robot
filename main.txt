@@ -1,0 +1,151 @@
+#include <Ultrasonic.h>
+
+#define DIR_PIN_M1 22
+#define STEP_PIN_M1 2
+#define NEG_DIR_PIN_M1 50
+#define NEG_STEP_PIN_M1 4
+
+#define DIR_PIN_M2 34
+#define STEP_PIN_M2 8
+#define NEG_DIR_PIN_M2 30
+#define NEG_STEP_PIN_M2 10
+#define int1 6
+#define int2 13
+#define enable 3
+
+
+
+#define MOTOR_1 1
+#define MOTOR_2 2
+
+#define IR_SENSOR_LEFT A0
+#define IR_SENSOR_RIGHT A1
+
+#define TRIGGER_PIN A2
+#define ECHO_PIN A3
+
+Ultrasonic ultrasonic(TRIGGER_PIN, ECHO_PIN);
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(int1, OUTPUT);
+  pinMode(int2, OUTPUT);
+  pinMode(enable, OUTPUT);
+
+  pinMode(DIR_PIN_M1, OUTPUT);
+  pinMode(STEP_PIN_M1, OUTPUT);
+  pinMode(NEG_DIR_PIN_M1, OUTPUT);
+  pinMode(NEG_STEP_PIN_M1, OUTPUT);
+
+  pinMode(DIR_PIN_M2, OUTPUT);
+  pinMode(STEP_PIN_M2, OUTPUT);
+  pinMode(NEG_DIR_PIN_M2, OUTPUT);
+  pinMode(NEG_STEP_PIN_M2, OUTPUT);
+
+  pinMode(IR_SENSOR_LEFT, INPUT);
+  pinMode(IR_SENSOR_RIGHT, INPUT);
+}
+
+void loop() {
+  int leftSensorValue = digitalRead(IR_SENSOR_LEFT);
+  int rightSensorValue = digitalRead(IR_SENSOR_RIGHT);
+
+  // Read ultrasonic sensor distance every 10th iteration
+  static int counter = 0;
+  static long ultrasonicDistance = 0;
+  if (counter % 10 == 0) {
+    ultrasonicDistance = ultrasonic.distanceRead();
+  }
+  counter++;
+
+  if (leftSensorValue == HIGH && rightSensorValue == HIGH) {
+    digitalWrite(int1, LOW);
+    digitalWrite(int2, HIGH);
+    analogWrite(enable,255);
+    delay(6000); 
+    digitalWrite(int1, HIGH);
+    digitalWrite(int2, LOW);
+    analogWrite(enable,255);
+    delay(6000);
+    stopMotors();
+  } else {
+    if (ultrasonicDistance <= 5) {
+      stopMotors();
+    } else {
+      if (leftSensorValue == LOW && rightSensorValue == LOW) {
+       digitalWrite(DIR_PIN_M1, LOW);
+      digitalWrite(NEG_DIR_PIN_M1, HIGH);
+      digitalWrite(DIR_PIN_M2, HIGH);
+      digitalWrite(NEG_DIR_PIN_M2, LOW);
+      moveMotors();
+      } else if (leftSensorValue == HIGH && rightSensorValue == LOW) {
+        digitalWrite(DIR_PIN_M1, LOW);
+        digitalWrite(NEG_DIR_PIN_M1, LOW);
+        stopMotor(MOTOR_1);
+        digitalWrite(DIR_PIN_M2, LOW);
+        digitalWrite(NEG_DIR_PIN_M2, HIGH);
+        moveMotor(MOTOR_2);
+      } else if (leftSensorValue == LOW && rightSensorValue == HIGH) {
+        digitalWrite(DIR_PIN_M1, HIGH);
+        digitalWrite(NEG_DIR_PIN_M1, LOW);
+        moveMotor(MOTOR_1);
+        digitalWrite(DIR_PIN_M2, LOW);
+        digitalWrite(NEG_DIR_PIN_M2, LOW);
+        stopMotor(MOTOR_2);
+      } else {
+        stopMotors();
+        
+        
+        
+      }
+    }
+  }
+}
+
+void moveMotors() {
+  digitalWrite(STEP_PIN_M1, LOW);
+  digitalWrite(STEP_PIN_M2, LOW);
+  digitalWrite(NEG_STEP_PIN_M1, LOW);
+  digitalWrite(NEG_STEP_PIN_M2, LOW);
+  delayMicroseconds(500); // Adjust as needed
+  digitalWrite(STEP_PIN_M1, HIGH);
+  digitalWrite(STEP_PIN_M2, HIGH);
+  digitalWrite(NEG_STEP_PIN_M1, HIGH);
+  digitalWrite(NEG_STEP_PIN_M2, HIGH);
+  delayMicroseconds(500); // Adjust as needed
+}
+
+void moveMotor(int motor) {
+  if (motor == MOTOR_1) {
+    digitalWrite(STEP_PIN_M1, LOW);
+    digitalWrite(NEG_STEP_PIN_M1, LOW);
+    delayMicroseconds(500); // Adjust as needed
+    digitalWrite(STEP_PIN_M1, HIGH);
+    digitalWrite(NEG_STEP_PIN_M1, HIGH);
+    delayMicroseconds(500); // Adjust as needed
+  } else if (motor == MOTOR_2) {
+    digitalWrite(STEP_PIN_M2, LOW);
+    digitalWrite(NEG_STEP_PIN_M2, LOW);
+    delayMicroseconds(500); // Adjust as needed
+    digitalWrite(STEP_PIN_M2, HIGH);
+    digitalWrite(NEG_STEP_PIN_M2, HIGH);
+    delayMicroseconds(500); // Adjust as needed
+  }
+}
+
+void stopMotors() {
+  digitalWrite(STEP_PIN_M1, LOW);
+  digitalWrite(STEP_PIN_M2, LOW);
+  digitalWrite(NEG_STEP_PIN_M1, LOW);
+  digitalWrite(NEG_STEP_PIN_M2, LOW);
+}
+
+void stopMotor(int motor) {
+  if (motor == MOTOR_1) {
+    digitalWrite(STEP_PIN_M1, LOW);
+    digitalWrite(NEG_STEP_PIN_M1, LOW);
+  } else if (motor == MOTOR_2) {
+    digitalWrite(STEP_PIN_M2, LOW);
+    digitalWrite(NEG_STEP_PIN_M2, LOW);
+  }
+}
